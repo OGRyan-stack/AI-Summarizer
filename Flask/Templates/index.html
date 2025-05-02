@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Advanced Summarization Bot</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
         :root {
             --primary: #4a6fa5;
@@ -15,12 +16,11 @@
             --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
         
-         
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Inter', sans-serif;
         }
         
         body {
@@ -128,6 +128,7 @@
             line-height: 1.5;
             position: relative;
             box-shadow: var(--shadow);
+            word-wrap: break-word;
         }
         
         .user-message {
@@ -155,6 +156,7 @@
         .input-group {
             display: flex;
             gap: 10px;
+            margin-bottom: 10px;
         }
         
         #userInput {
@@ -163,13 +165,8 @@
             border: 1px solid #ddd;
             border-radius: 8px;
             font-size: 16px;
-            transition: all 0.3s ease;
-        }
-        
-        #userInput:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(74, 111, 165, 0.2);
+            min-height: 100px;
+            resize: vertical;
         }
         
         .btn {
@@ -210,68 +207,15 @@
             margin-bottom: 15px;
         }
         
-        footer {
-            text-align: center;
-            margin-top: 30px;
-            padding: 20px;
+        .input-counter {
+            font-size: 12px;
             color: #64748b;
-            font-size: 14px;
+            text-align: right;
+            margin-top: 5px;
         }
         
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            .chat-container {
-                flex-direction: column;
-                height: auto;
-            }
-            
-            .message-column {
-                height: 300px;
-            }
-            
-            .message-column:first-child {
-                border-right: none;
-                border-bottom: 1px solid #eee;
-            }
-            
-            .container {
-                padding: 10px;
-            }
-        }
-        
-        .options-panel {
-            background-color: #f8fafc;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            border: 1px solid #e2e8f0;
-        }
-        
-        .options-row {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 10px;
-            flex-wrap: wrap;
-        }
-        
-        .option-group {
-            flex: 1;
-            min-width: 200px;
-        }
-        
-        .option-group label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: 600;
-            color: var(--secondary);
-        }
-        
-        .option-group select {
-            width: 100%;
-            padding: 8px 12px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            background-color: white;
+        .input-counter.warning {
+            color: #e74c3c;
         }
         
         .stats-bar {
@@ -293,6 +237,41 @@
             font-weight: 600;
             margin-left: 5px;
             color: var(--primary);
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 8px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        @media (max-width: 768px) {
+            .chat-container {
+                flex-direction: column;
+                height: auto;
+            }
+            
+            .message-column {
+                height: 300px;
+            }
+            
+            .message-column:first-child {
+                border-right: none;
+                border-bottom: 1px solid #eee;
+            }
+            
+            .container {
+                padding: 10px;
+            }
         }
     </style>
 </head>
@@ -338,41 +317,16 @@
             <div class="input-area">
                 <div class="error-message" id="error-message">Please enter some text to summarize.</div>
                 
-                <div class="options-panel">
-                    <div class="options-row">
-                        <div class="option-group">
-                            <label for="model-select">Model</label>
-                            <select id="model-select">
-                                <option value="facebook/bart-large-cnn">BART (balanced)</option>
-                                <option value="t5-small">T5 (fast)</option>
-                                <option value="google/pegasus-xsum">Pegasus (concise)</option>
-                            </select>
-                        </div>
-                        <div class="option-group">
-                            <label for="length-select">Summary Length</label>
-                            <select id="length-select">
-                                <option value="short">Short</option>
-                                <option value="medium" selected>Medium</option>
-                                <option value="long">Long</option>
-                                <option value="custom">Custom</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="options-row" id="custom-length-row" style="display: none;">
-                        <div class="option-group">
-                            <label for="min-length">Min Length</label>
-                            <input type="number" id="min-length" min="30" max="500" value="100">
-                        </div>
-                        <div class="option-group">
-                            <label for="max-length">Max Length</label>
-                            <input type="number" id="max-length" min="50" max="1000" value="300">
-                        </div>
-                    </div>
+                <div class="input-group">
+                    <textarea id="userInput" placeholder="Enter text to summarize..." 
+                              oninput="updateCounter()"></textarea>
                 </div>
+                <div id="input-counter" class="input-counter">0/20000</div>
                 
                 <div class="input-group">
-                    <input type="text" id="userInput" placeholder="Enter text to summarize..." autocomplete="off">
-                    <button class="btn btn-primary" id="summarize-btn">Summarize</button>
+                    <button class="btn btn-primary" id="summarize-btn">
+                        <span id="btn-text">Summarize</span>
+                    </button>
                     <button class="btn btn-secondary" onclick="clearChat()">Clear</button>
                 </div>
                 
@@ -396,135 +350,144 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const userInput = document.getElementById('userInput');
             const summarizeBtn = document.getElementById('summarize-btn');
-            const lengthSelect = document.getElementById('length-select');
-            const customLengthRow = document.getElementById('custom-length-row');
-            const modelSelect = document.getElementById('model-select');
-            
-            // Show/hide custom length options
-            lengthSelect.addEventListener('change', function() {
-                customLengthRow.style.display = this.value === 'custom' ? 'flex' : 'none';
-            });
-            
-            // Summarize button click handler
             summarizeBtn.addEventListener('click', sendMessage);
             
-            // Enter key handler
-            userInput.addEventListener('keypress', function(event) {
-                if (event.key === 'Enter') {
-                    sendMessage();
-                }
-            });
+            // Initialize character counter
+            document.getElementById('userInput').addEventListener('input', updateCounter);
         });
-        
-        function getSummaryOptions() {
-            const lengthPreset = document.getElementById('length-select').value;
-            let minLength = 30;
-            let maxLength = 130;
+
+        function updateCounter() {
+            const input = document.getElementById('userInput');
+            const counter = document.getElementById('input-counter');
+            const maxLength = 20000;
+            const currentLength = input.value.length;
             
-            if (lengthPreset === 'short') {
-                minLength = 30;
-                maxLength = 100;
-            } else if (lengthPreset === 'medium') {
-                minLength = 100;
-                maxLength = 300;
-            } else if (lengthPreset === 'long') {
-                minLength = 150;
-                maxLength = 500;
-            } else if (lengthPreset === 'custom') {
-                minLength = parseInt(document.getElementById('min-length').value);
-                maxLength = parseInt(document.getElementById('max-length').value);
-            }
-            
-            return {
-                model: document.getElementById('model-select').value,
-                max_length: maxLength,
-                min_length: minLength
-            };
+            counter.textContent = `${currentLength}/${maxLength}`;
+            counter.className = currentLength > maxLength * 0.9 ? 
+                "input-counter warning" : "input-counter";
         }
-        
-        function sendMessage() {
-            const userInput = document.getElementById('userInput').value;
-            if (!userInput.trim()) {
-                document.getElementById('error-message').style.display = 'block';
-                return;
+
+        function showError(message, duration=5000) {
+            const errorElement = document.getElementById('error-message');
+            errorElement.textContent = message;
+            errorElement.style.display = "block";
+            if (duration > 0) {
+                setTimeout(() => {
+                    errorElement.style.display = "none";
+                }, duration);
             }
-            
-            document.getElementById('error-message').style.display = 'none';
-            
-            // Display user message
-            const userMessagesContainer = document.getElementById('user-messages');
-            const timestamp = new Date().toLocaleTimeString();
-            
-            userMessagesContainer.innerHTML += `
-                <div class="message user-message">
-                    ${userInput}
-                    <div class="timestamp">${timestamp}</div>
-                </div>
-            `;
-            
-            // Get summarization options
-            const options = getSummaryOptions();
-            
-            // Call Flask backend
-            fetch("/summarize", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ 
-                    text: userInput,
-                    options: options
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
+        }
+
+        function validateText(text) {
+            const maxLength = 20000;
+            if (!text.trim()) {
+                showError("Please enter some text to summarize");
+                return false;
+            }
+            if (text.length > maxLength) {
+                showError(`Text exceeds ${maxLength} character limit`);
+                return false;
+            }
+            return true;
+        }
+
+        async function sendMessage() {
+            const userInput = document.getElementById('userInput').value;
+            if (!validateText(userInput)) return;
+
+            // Show loading state
+            const summarizeBtn = document.getElementById('summarize-btn');
+            const btnText = document.getElementById('btn-text');
+            const originalBtnText = btnText.textContent;
+            summarizeBtn.disabled = true;
+            btnText.innerHTML = `<div class="loading"></div> Processing...`;
+
+            try {
+                // Display user message
+                const userMessagesContainer = document.getElementById('user-messages');
                 const timestamp = new Date().toLocaleTimeString();
-                const aiMessagesContainer = document.getElementById('ai-messages');
                 
-                if (data.error) {
-                    aiMessagesContainer.innerHTML += `
-                        <div class="message ai-message">
-                            <strong>Error:</strong> ${data.error}
-                            <div class="timestamp">${timestamp}</div>
-                        </div>
-                    `;
-                } else {
-                    aiMessagesContainer.innerHTML += `
-                        <div class="message ai-message">
-                            ${data.summary.replace(/\n/g, '<br>')}
-                            <div class="timestamp">${timestamp}</div>
-                        </div>
-                    `;
-                    
-                    // Update stats
+                userMessagesContainer.innerHTML += `
+                    <div class="message user-message">
+                        ${userInput.replace(/\n/g, '<br>')}
+                        <div class="timestamp">${timestamp}</div>
+                    </div>
+                `;
+
+                const response = await fetch("/summarize", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ text: userInput })
+                });
+
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.error || "Failed to summarize");
+                }
+
+                // Display AI response
+                const aiMessagesContainer = document.getElementById('ai-messages');
+                aiMessagesContainer.innerHTML += `
+                    <div class="message ai-message">
+                        ${data.summary.replace(/\n/g, '<br>')}
+                        ${data.fallback ? '<br><em>(Basic summary fallback)</em>' : ''}
+                        <div class="timestamp">${timestamp}</div>
+                    </div>
+                `;
+
+                // Update stats if available
+                if (data.stats) {
                     document.getElementById('original-count').textContent = data.stats.input_words;
                     document.getElementById('summary-count').textContent = data.stats.output_words;
                     document.getElementById('reduction').textContent = data.stats.reduction;
                     document.getElementById('stats-bar').style.display = 'flex';
                 }
+
+            } catch (error) {
+                console.error("Summarization error:", error);
+                showError(error.message);
                 
-                // Auto-scroll
-                userMessagesContainer.scrollTop = userMessagesContainer.scrollHeight;
-                aiMessagesContainer.scrollTop = aiMessagesContainer.scrollHeight;
-            })
-            .catch(error => {
-                const timestamp = new Date().toLocaleTimeString();
-                document.getElementById('ai-messages').innerHTML += `
+                // Also show error in chat
+                const aiMessagesContainer = document.getElementById('ai-messages');
+                aiMessagesContainer.innerHTML += `
                     <div class="message ai-message">
-                        <strong>Error:</strong> Failed to summarize. Please try again.
-                        <div class="timestamp">${timestamp}</div>
+                        <strong>Error:</strong> ${error.message}
+                        <div class="timestamp">${new Date().toLocaleTimeString()}</div>
                     </div>
                 `;
-            });
-            
-            document.getElementById('userInput').value = '';
+            } finally {
+                // Reset UI
+                const summarizeBtn = document.getElementById('summarize-btn');
+                const btnText = document.getElementById('btn-text');
+                summarizeBtn.disabled = false;
+                btnText.textContent = originalBtnText;
+                document.getElementById('userInput').value = '';
+                document.getElementById('input-counter').textContent = '0/20000';
+                
+                // Auto-scroll
+                document.getElementById('user-messages').scrollTop = 99999;
+                document.getElementById('ai-messages').scrollTop = 99999;
+            }
         }
-        
+
         function clearChat() {
             document.getElementById('user-messages').innerHTML = '';
             document.getElementById('ai-messages').innerHTML = '';
             document.getElementById('stats-bar').style.display = 'none';
+            document.getElementById('userInput').value = '';
+            document.getElementById('input-counter').textContent = '0/20000';
+            document.getElementById('error-message').style.display = 'none';
         }
+
+        // Allow sending message with Enter key (Ctrl+Enter for new line)
+        document.getElementById('userInput').addEventListener('keydown', function(event) {
+            if (event.key === 'Enter' && !event.shiftKey && !event.ctrlKey) {
+                event.preventDefault();
+                sendMessage();
+            }
+        });
     </script>
 </body>
 </html>
